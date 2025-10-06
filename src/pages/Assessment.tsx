@@ -4,7 +4,7 @@ import Step1Resume from '../components/assessment/Step1Resume';
 import Step2Communication from '../components/assessment/Step2Communication';
 import Step3Technical from '../components/assessment/Step3Technical';
 import ProgressBar from '../components/ProgressBar';
-import { CheckCircle, FileText, Mic, Code } from 'lucide-react';
+import { CheckCircle, FileText, Code } from 'lucide-react';
 import {fetchQuizQuestionsAPI } from '../api/communicationAPI'
 
 interface CandidateInfo {
