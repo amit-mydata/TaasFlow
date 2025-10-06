@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+"use client";
+
+import React, { useState, useEffect } from 'react';
 import { Search, Filter, Download, MoreVertical, TrendingUp, Users, CheckCircle, Clock } from 'lucide-react';
+import { getDashboardData, DashboardResponse } from '../api/dashboardAPI';
 
 interface Candidate {
   id: number;
   name: string;
   email: string;
-  position: string;
+  phone: string;
   date: string;
   finalScore: number;
   status: 'strong-fit' | 'potential-fit' | 'not-fit';
@@ -24,72 +27,38 @@ interface Stat {
 const Dashboard: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'strong-fit' | 'potential-fit' | 'not-fit'>('all');
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
 
-  const mockCandidates: Candidate[] = [
-    {
-      id: 1,
-      name: 'Sarah Johnson',
-      email: 'sarah.johnson@email.com',
-      position: 'Senior React Developer',
-      date: '2024-01-15',
-      finalScore: 87,
-      status: 'strong-fit',
-      resumeScore: 92,
-      communicationScore: 85,
-      technicalScore: 84
-    },
-    {
-      id: 2,
-      name: 'Michael Chen',
-      email: 'michael.chen@email.com',
-      position: 'Full Stack Engineer',
-      date: '2024-01-14',
-      finalScore: 73,
-      status: 'potential-fit',
-      resumeScore: 78,
-      communicationScore: 82,
-      technicalScore: 68
-    },
-    {
-      id: 3,
-      name: 'Emily Rodriguez',
-      email: 'emily.rodriguez@email.com',
-      position: 'DevOps Consultant',
-      date: '2024-01-13',
-      finalScore: 91,
-      status: 'strong-fit',
-      resumeScore: 88,
-      communicationScore: 94,
-      technicalScore: 92
-    },
-    {
-      id: 4,
-      name: 'David Kim',
-      email: 'david.kim@email.com',
-      position: 'Backend Developer',
-      date: '2024-01-12',
-      finalScore: 56,
-      status: 'not-fit',
-      resumeScore: 65,
-      communicationScore: 52,
-      technicalScore: 51
-    },
-    {
-      id: 5,
-      name: 'Lisa Wang',
-      email: 'lisa.wang@email.com',
-      position: 'UI/UX Consultant',
-      date: '2024-01-11',
-      finalScore: 82,
-      status: 'strong-fit',
-      resumeScore: 86,
-      communicationScore: 89,
-      technicalScore: 77
-    }
-  ];
+  // Fetch real dashboard data
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const data: DashboardResponse = await getDashboardData();
+        const mappedCandidates: Candidate[] = data.data.recent_assessments.map((item, index) => ({
+          id: index + 1,
+          name: item.candidate_name,
+          email: item.email,
+          phone: item.phone,
+          date: item.date,
+          finalScore: item.overall_score,
+          status:
+            item.status === 'strong-fit' || item.status === 'potential-fit' || item.status === 'not-fit'
+              ? item.status
+              : 'potential-fit',
+          resumeScore: item.resume_score,
+          communicationScore: item.communication_score || 0,
+          technicalScore: item.technical_score || 0,
+        }));
+        setCandidates(mappedCandidates);
+      } catch (err) {
+        console.error('Failed to fetch dashboard data', err);
+      }
+    };
+    fetchData();
+  }, []);
 
   const stats: Stat[] = [
-    { label: 'Total Assessments', value: '247', change: '+12%', icon: Users },
+    { label: 'Total Assessments', value: candidates.length.toString(), change: '+12%', icon: Users },
     { label: 'Strong Fit Rate', value: '38%', change: '+5%', icon: CheckCircle },
     { label: 'Avg. Processing Time', value: '8.2 min', change: '-15%', icon: Clock },
     { label: 'Client Satisfaction', value: '94.2%', change: '+2%', icon: TrendingUp }
@@ -111,11 +80,11 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const filteredCandidates = mockCandidates.filter(candidate => {
+  const filteredCandidates = candidates.filter(candidate => {
     const matchesSearch =
       candidate.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       candidate.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      candidate.position.toLowerCase().includes(searchTerm.toLowerCase());
+      candidate.phone.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter = filterStatus === 'all' || candidate.status === filterStatus;
     return matchesSearch && matchesFilter;
   });
@@ -167,8 +136,7 @@ const Dashboard: React.FC = () => {
 
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
-              <Filter className="w-5 h-5 text-gray-400" />
-              <select
+ <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value as any)}
                 className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -180,10 +148,7 @@ const Dashboard: React.FC = () => {
               </select>
             </div>
 
-            <button className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-              <Download className="w-4 h-4" />
-              <span>Export</span>
-            </button>
+
           </div>
         </div>
       </div>
@@ -201,14 +166,13 @@ const Dashboard: React.FC = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Candidate</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone No.</th>
                 <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Overall Score</th>
                 <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Resume</th>
                 <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Communication</th>
                 <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Technical</th>
                 <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -221,7 +185,7 @@ const Dashboard: React.FC = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{candidate.position}</div>
+                    <div className="text-sm text-gray-900">{candidate.phone}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center">
                     <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${
@@ -229,23 +193,19 @@ const Dashboard: React.FC = () => {
                       candidate.finalScore >= 60 ? 'bg-yellow-100 text-yellow-800' :
                       'bg-red-100 text-red-800'
                     }`}>
-                      {candidate.finalScore}%
+                      {candidate.finalScore.toFixed(2)}%
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900">{candidate.resumeScore}%</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900">{candidate.communicationScore}%</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900">{candidate.technicalScore}%</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900"> {candidate.resumeScore.toFixed(2)}%</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900"> {candidate.communicationScore.toFixed(2)}%</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900">{candidate.technicalScore.toFixed(2)}%</td>
                   <td className="px-6 py-4 whitespace-nowrap text-center">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(candidate.status)}`}>
                       {getStatusLabel(candidate.status)}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{new Date(candidate.date).toLocaleDateString()}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-center">
-                    <button className="text-gray-400 hover:text-gray-600 transition-colors">
-                      <MoreVertical className="w-5 h-5" />
-                    </button>
-                  </td>
+                  
                 </tr>
               ))}
             </tbody>
