@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { Search, Filter, Download, MoreVertical, TrendingUp, Users, CheckCircle, Clock } from 'lucide-react';
-import { getDashboardData, DashboardResponse } from '../api/dashboardAPI';
+import React, { useState, useEffect } from "react";
+import { Search, TrendingUp, Users, CheckCircle, Clock } from "lucide-react";
+import { getDashboardData, DashboardResponse } from "../api/dashboardAPI";
 
 interface Candidate {
   id: number;
@@ -11,10 +11,10 @@ interface Candidate {
   phone: string;
   date: string;
   finalScore: number;
-  status: 'strong-fit' | 'potential-fit' | 'not-fit';
   resumeScore: number;
   communicationScore: number;
   technicalScore: number;
+  status: "strong-fit" | "potential-fit" | "not-fit";
 }
 
 interface Stat {
@@ -25,76 +25,107 @@ interface Stat {
 }
 
 const Dashboard: React.FC = () => {
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  const [filterStatus, setFilterStatus] = useState<'all' | 'strong-fit' | 'potential-fit' | 'not-fit'>('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState<
+    "all" | "strong-fit" | "potential-fit" | "not-fit"
+  >("all");
   const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [loading, setLoading] = useState(true);
 
   // Fetch real dashboard data
   useEffect(() => {
     const fetchData = async () => {
       try {
         const data: DashboardResponse = await getDashboardData();
-        const mappedCandidates: Candidate[] = data.data.recent_assessments.map((item, index) => ({
-          id: index + 1,
-          name: item.candidate_name,
-          email: item.email,
-          phone: item.phone,
-          date: item.date,
-          finalScore: item.overall_score,
-          status:
-            item.status === 'strong-fit' || item.status === 'potential-fit' || item.status === 'not-fit'
-              ? item.status
-              : 'potential-fit',
-          resumeScore: item.resume_score,
-          communicationScore: item.communication_score || 0,
-          technicalScore: item.technical_score || 0,
-        }));
+        console.log("Dashboard API response:", data);
+
+        const mappedCandidates: Candidate[] =
+          data?.data?.recent_assessments?.map((item, index) => ({
+            id: index + 1,
+            name: item.candidate_name,
+            email: item.email,
+            phone: item.phone,
+            date: item.date,
+            finalScore: item.overall_score || 0,
+            status:
+              item.status === "strong-fit" ||
+              item.status === "potential-fit" ||
+              item.status === "not-fit"
+                ? item.status
+                : "potential-fit",
+            resumeScore: item.resume_score || 0,
+            communicationScore: item.communication_score || 0,
+            technicalScore: item.technical_score || 0,
+          })) || [];
+
         setCandidates(mappedCandidates);
       } catch (err) {
-        console.error('Failed to fetch dashboard data', err);
+        console.error("Failed to fetch dashboard data", err);
+      } finally {
+        setLoading(false);
       }
     };
     fetchData();
   }, []);
 
   const stats: Stat[] = [
-    { label: 'Total Assessments', value: candidates.length.toString(), change: '+12%', icon: Users },
-    { label: 'Strong Fit Rate', value: '38%', change: '+5%', icon: CheckCircle },
-    { label: 'Avg. Processing Time', value: '8.2 min', change: '-15%', icon: Clock },
-    { label: 'Client Satisfaction', value: '94.2%', change: '+2%', icon: TrendingUp }
+    { label: "Total Assessments", value: candidates.length.toString(), change: "+12%", icon: Users },
+    { label: "Strong Fit Rate", value: "38%", change: "+5%", icon: CheckCircle },
+    { label: "Avg. Processing Time", value: "8.2 min", change: "-15%", icon: Clock },
+    { label: "Client Satisfaction", value: "94.2%", change: "+2%", icon: TrendingUp },
   ];
 
-  const getStatusColor = (status: Candidate['status']): string => {
+  const getStatusColor = (status: Candidate["status"]) => {
     switch (status) {
-      case 'strong-fit': return 'bg-green-100 text-green-800';
-      case 'potential-fit': return 'bg-yellow-100 text-yellow-800';
-      case 'not-fit': return 'bg-red-100 text-red-800';
+      case "strong-fit":
+        return "bg-green-100 text-green-800";
+      case "potential-fit":
+        return "bg-yellow-100 text-yellow-800";
+      case "not-fit":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-500";
     }
   };
 
-  const getStatusLabel = (status: Candidate['status']): string => {
+  const getStatusLabel = (status: Candidate["status"]) => {
     switch (status) {
-      case 'strong-fit': return 'Strong Fit';
-      case 'potential-fit': return 'Potential Fit';
-      case 'not-fit': return 'Not a Fit';
+      case "strong-fit":
+        return "Strong Fit";
+      case "potential-fit":
+        return "Potential Fit";
+      case "not-fit":
+        return "Not a Fit";
+      default:
+        return "Unknown";
     }
   };
 
-  const filteredCandidates = candidates.filter(candidate => {
+  const filteredCandidates = candidates.filter((candidate) => {
     const matchesSearch =
       candidate.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       candidate.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       candidate.phone.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterStatus === 'all' || candidate.status === filterStatus;
+    const matchesFilter = filterStatus === "all" || candidate.status === filterStatus;
     return matchesSearch && matchesFilter;
   });
+
+  if (loading) {
+    return (
+      <div className="text-center py-20 text-gray-500 text-lg">
+        Loading dashboard...
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Assessment Dashboard</h1>
-        <p className="text-gray-600">Monitor and analyze candidate assessment performance</p>
+        <p className="text-gray-600">
+          Monitor and analyze candidate assessment performance
+        </p>
       </div>
 
       {/* Stats Grid */}
@@ -121,35 +152,27 @@ const Dashboard: React.FC = () => {
       {/* Filters and Search */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
         <div className="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0">
-          <div className="flex items-center space-x-4 w-full sm:w-auto">
-            <div className="relative flex-1 sm:w-80">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search candidates..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
+          <div className="relative flex-1 sm:w-80">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search candidates..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
           </div>
 
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
- <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value as any)}
-                className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="all">All Statuses</option>
-                <option value="strong-fit">Strong Fit</option>
-                <option value="potential-fit">Potential Fit</option>
-                <option value="not-fit">Not a Fit</option>
-              </select>
-            </div>
-
-
-          </div>
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value as any)}
+            className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="all">All Statuses</option>
+            <option value="strong-fit">Strong Fit</option>
+            <option value="potential-fit">Potential Fit</option>
+            <option value="not-fit">Not a Fit</option>
+          </select>
         </div>
       </div>
 
@@ -188,24 +211,39 @@ const Dashboard: React.FC = () => {
                     <div className="text-sm text-gray-900">{candidate.phone}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center">
-                    <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${
-                      candidate.finalScore >= 80 ? 'bg-green-100 text-green-800' :
-                      candidate.finalScore >= 60 ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-red-100 text-red-800'
-                    }`}>
+                    <div
+                      className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${
+                        candidate.finalScore >= 80
+                          ? "bg-green-100 text-green-800"
+                          : candidate.finalScore >= 60
+                          ? "bg-yellow-100 text-yellow-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
                       {candidate.finalScore.toFixed(2)}%
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900"> {candidate.resumeScore.toFixed(2)}%</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900"> {candidate.communicationScore.toFixed(2)}%</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900">{candidate.technicalScore.toFixed(2)}%</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900">
+                    {candidate.resumeScore.toFixed(2)}%
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900">
+                    {candidate.communicationScore.toFixed(2)}%
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900">
+                    {candidate.technicalScore.toFixed(2)}%
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(candidate.status)}`}>
+                    <span
+                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
+                        candidate.status
+                      )}`}
+                    >
                       {getStatusLabel(candidate.status)}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{new Date(candidate.date).toLocaleDateString()}</td>
-                  
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {new Date(candidate.date).toLocaleDateString()}
+                  </td>
                 </tr>
               ))}
             </tbody>
