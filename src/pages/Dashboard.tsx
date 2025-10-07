@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Search, TrendingUp, Users, CheckCircle, Clock } from "lucide-react";
-import { getDashboardData, DashboardResponse } from "../api/dashboardAPI";
+import { getDashboardData } from "../api/dashboardAPI";
 
 interface Candidate {
   id: number;
@@ -14,7 +14,7 @@ interface Candidate {
   resumeScore: number;
   communicationScore: number;
   technicalScore: number;
-  status: "strong-fit" | "potential-fit" | "not-fit";
+  status: string;
 }
 
 interface Stat {
@@ -33,29 +33,35 @@ const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   // Fetch real dashboard data
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCandidates, setTotalCandidates] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+
+  const perPage = 10;
+
+  // Fetch data whenever the page changes
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
       try {
-        const data: DashboardResponse = await getDashboardData();
-        console.log("Dashboard API response:", data);
+        const data = await getDashboardData(currentPage, perPage);
+
+        // Use backend's total count
+        setTotalCandidates(data.data.total_count);
+        setTotalPages(data.data.total_pages); // <-- use total_pages from API
 
         const mappedCandidates: Candidate[] =
           data?.data?.recent_assessments?.map((item, index) => ({
-            id: index + 1,
+            id: (currentPage - 1) * perPage + index + 1,
             name: item.candidate_name,
             email: item.email,
             phone: item.phone,
             date: item.date,
-            finalScore: item.overall_score || 0,
-            status:
-              item.status === "strong-fit" ||
-              item.status === "potential-fit" ||
-              item.status === "not-fit"
-                ? item.status
-                : "potential-fit",
-            resumeScore: item.resume_score || 0,
-            communicationScore: item.communication_score || 0,
-            technicalScore: item.technical_score || 0,
+            finalScore: item.overall_score ?? 0,
+            status: item.status ?? "Incomplete",
+            resumeScore: item.resume_score ?? 0,
+            communicationScore: item.communication_score ?? 0,
+            technicalScore: item.technical_score ?? 0,
           })) || [];
 
         setCandidates(mappedCandidates);
@@ -65,40 +71,30 @@ const Dashboard: React.FC = () => {
         setLoading(false);
       }
     };
+
     fetchData();
-  }, []);
+  }, [currentPage]);
+
+
 
   const stats: Stat[] = [
-    { label: "Total Assessments", value: candidates.length.toString(), change: "+12%", icon: Users },
+    { label: "Total Assessments", value: totalCandidates.toString(), change: "+12%", icon: Users },
     { label: "Strong Fit Rate", value: "38%", change: "+5%", icon: CheckCircle },
     { label: "Avg. Processing Time", value: "8.2 min", change: "-15%", icon: Clock },
     { label: "Client Satisfaction", value: "94.2%", change: "+2%", icon: TrendingUp },
   ];
 
-  const getStatusColor = (status: Candidate["status"]) => {
-    switch (status) {
-      case "strong-fit":
-        return "bg-green-100 text-green-800";
-      case "potential-fit":
-        return "bg-yellow-100 text-yellow-800";
-      case "not-fit":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-500";
-    }
+  const getStatusColor = (status: string) => {
+    const lower = status.toLowerCase();
+    if (lower.includes("strong")) return "bg-green-100 text-green-800";
+    if (lower.includes("potential")) return "bg-yellow-100 text-yellow-800";
+    if (lower.includes("not")) return "bg-red-100 text-red-800";
+    return "bg-gray-100 text-gray-500";
   };
 
-  const getStatusLabel = (status: Candidate["status"]) => {
-    switch (status) {
-      case "strong-fit":
-        return "Strong Fit";
-      case "potential-fit":
-        return "Potential Fit";
-      case "not-fit":
-        return "Not a Fit";
-      default:
-        return "Unknown";
-    }
+  const getStatusLabel = (status: string) => {
+    // Just return as-is, capitalized nicely
+    return status || "Incomplete";
   };
 
   const filteredCandidates = candidates.filter((candidate) => {
@@ -119,7 +115,7 @@ const Dashboard: React.FC = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-6 py-8">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Assessment Dashboard</h1>
@@ -180,7 +176,7 @@ const Dashboard: React.FC = () => {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-100">
           <h2 className="text-lg font-semibold text-gray-900">
-            Recent Assessments ({filteredCandidates.length})
+            Recent Assessments  ({candidates.length})
           </h2>
         </div>
 
@@ -212,13 +208,12 @@ const Dashboard: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center">
                     <div
-                      className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${
-                        candidate.finalScore >= 80
-                          ? "bg-green-100 text-green-800"
-                          : candidate.finalScore >= 60
+                      className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${candidate.finalScore >= 80
+                        ? "bg-green-100 text-green-800"
+                        : candidate.finalScore >= 60
                           ? "bg-yellow-100 text-yellow-800"
                           : "bg-red-100 text-red-800"
-                      }`}
+                        }`}
                     >
                       {candidate.finalScore.toFixed(2)}%
                     </div>
@@ -249,6 +244,34 @@ const Dashboard: React.FC = () => {
             </tbody>
           </table>
         </div>
+        <div className="flex justify-center items-center px-6 py-4 bg-gray-50 border-t border-gray-100 space-x-2">
+          <button
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+          >
+            Prev
+          </button>
+
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+            <button
+              key={page}
+              onClick={() => setCurrentPage(page)}
+              className={`px-3 py-1 rounded ${page === currentPage ? "bg-blue-500 text-white" : "bg-gray-200"}`}
+            >
+              {page}
+            </button>
+          ))}
+
+          <button
+            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+
 
         {filteredCandidates.length === 0 && (
           <div className="px-6 py-12 text-center">

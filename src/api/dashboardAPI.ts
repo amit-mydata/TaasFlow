@@ -1,5 +1,4 @@
 // src/api/dashboardAPI.ts
-
 import { API_BASE_URL } from '../utils/config';
 
 export interface DashboardResponse {
@@ -12,17 +11,21 @@ export interface DashboardResponse {
       phone: string;
       communication_score: number | null;
       resume_score: number;
-      overall_score: number;
-      technical_score: number;
-      status: string;
+      overall_score: number | null;
+      technical_score: number | null;
+      status: string | null;
       date: string;
     }[];
+    page: number;
+    per_page: number;
+    total_pages: number;
+    total_count: number;
   };
 }
 
-// Function to call API using fetch
-export const getDashboardData = async (): Promise<DashboardResponse> => {
-  const response = await fetch(`${API_BASE_URL}/api/analyzer/dashboard`, {
+
+export const getDashboardData = async (page = 1, per_page = 10): Promise<DashboardResponse> => {
+  const response = await fetch(`${API_BASE_URL}/api/analyzer/dashboard?page=${page}&per_page=${per_page}`, {
     method: "GET",
     headers: {
       Accept: "application/json",
