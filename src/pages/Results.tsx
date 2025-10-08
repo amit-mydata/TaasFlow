@@ -57,6 +57,7 @@ interface Candidate {
   resumeAnalysis?: ResumeAnalysis;
   // communicationAnalysis?: CommunicationAnalysis;
   technicalResults?: TechnicalResults;
+  
 }
 
 const Results: React.FC = () => {
@@ -65,16 +66,22 @@ const Results: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchResults = async () => {
-      try {
-        const technicalRes = await fetchTechnicalResultsAPI(candidateId!);
-        const apiData = technicalRes.data;
+  const fetchResults = async () => {
+    try {
+      const token = localStorage.getItem('token'); // ✅ get saved token
+      if (!token) {
+        alert('Please login again.');
+        return;
+      }
 
-        const resumeAnalysis: ResumeAnalysis = {
-          matchedSkills: apiData.analyze_answer_response.matched_skills,
-          missingSkills: apiData.analyze_answer_response.missing_skills,
-          highlights: apiData.analyze_answer_response.key_highlights
-        };
+      const technicalRes = await fetchTechnicalResultsAPI(candidateId!, token); // pass token
+      const apiData = technicalRes.data;
+
+      const resumeAnalysis: ResumeAnalysis = {
+        matchedSkills: apiData.analyze_answer_response.matched_skills,
+        missingSkills: apiData.analyze_answer_response.missing_skills,
+        highlights: apiData.analyze_answer_response.key_highlights,
+      };
 
         // const communicationAnalysis: CommunicationAnalysis = {
         //   fluency: apiData.communication_data.fluency,
@@ -89,45 +96,46 @@ const Results: React.FC = () => {
         //   feedback: apiData.communication_data.feedback
         // };
 
-        const technicalResults: TechnicalResults = {
-          breakdown: {
-            experience: apiData.teachnical_data.experience_based,
-            requirements: Math.round(apiData.teachnical_data.coding_percentage * 100),
-            scenarios: Math.round(apiData.teachnical_data.text_percentage * 100)
-          },
-          overallScore: apiData.teachnical_data.overall_score
-        };
+         const technicalResults: TechnicalResults = {
+        breakdown: {
+          experience: apiData.teachnical_data.experience_based,
+          requirements: Math.round(apiData.teachnical_data.coding_percentage * 100),
+          scenarios: Math.round(apiData.teachnical_data.text_percentage * 100),
+        },
+        overallScore: apiData.teachnical_data.overall_score,
+      };
 
-        const finalScore = Math.round(
-          0.3 * apiData.analyze_answer_response.match_score +
-          // 0.2 * apiData.communication_data.communication_score +
-          0.5 * apiData.teachnical_data.overall_score
-        );
+      const finalScore = Math.round(
+        0.3 * apiData.analyze_answer_response.match_score +
+        // 0.2 * apiData.communication_data.communication_score +
+        0.5 * apiData.teachnical_data.overall_score
+      );
 
-        const candidateData = apiData.candidate_data; // from API response
+      const candidateData = apiData.candidate_data;
 
-        setCandidate({
-          candidateInfo: {
-            name: candidateData.candidate_name,
-            email: candidateData.email,          },
-          finalScore,
-          resumeScore: apiData.analyze_answer_response.match_score,
-          // communicationScore: apiData.communication_data.communication_score,
-          technicalScore: apiData.teachnical_data.overall_score,
-          resumeAnalysis,
-          // communicationAnalysis,
-          technicalResults
-        });
+      setCandidate({
+        candidateInfo: {
+          name: candidateData.candidate_name,
+          email: candidateData.email,
+        },
+        finalScore,
+        resumeScore: apiData.analyze_answer_response.match_score,
+        // communicationScore: apiData.communication_data.communication_score,
+        technicalScore: apiData.teachnical_data.overall_score,
+        resumeAnalysis,
+        // communicationAnalysis,
+        technicalResults,
+      });
 
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchResults();
-  }, [candidateId]);
+  fetchResults();
+}, [candidateId]);
 
   if (loading) return <div className="text-center py-16">Loading results...</div>;
 

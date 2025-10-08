@@ -6,12 +6,20 @@ export interface TechnicalResultsResponse {
   data: any;
 }
 
-// ✅ Fetch technical analysis result
-export const fetchTechnicalResultsAPI = async (candidateId: string): Promise<TechnicalResultsResponse> => {
+// ✅ Fetch technical analysis result with Bearer token
+export const fetchTechnicalResultsAPI = async (
+  candidateId: string,
+  token: string // <-- pass token here
+): Promise<TechnicalResultsResponse> => {
   try {
     const res = await fetch(
       `${API_BASE_URL}/api/analyzer/get-technical-data?candidate_uid=${candidateId}`,
-      { headers: { accept: 'application/json' } }
+      {
+        headers: {
+          accept: 'application/json',
+          Authorization: `Bearer ${token}`, // <-- attach token
+        },
+      }
     );
 
     if (!res.ok) throw new Error(`Failed to fetch technical results: ${res.status}`);

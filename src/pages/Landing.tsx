@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { Link } from 'react-router-dom';
 import { ArrowRight, FileText, Mic, Code, TrendingUp, CheckCircle, Clock, Users } from 'lucide-react';
 

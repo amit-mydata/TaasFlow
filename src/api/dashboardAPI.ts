@@ -11,6 +11,8 @@ export interface DashboardResponse {
       phone: string;
       communication_score: number | null;
       resume_score: number;
+      hr_name: string;            // ✅ new
+      job_position: string;
       overall_score: number | null;
       technical_score: number | null;
       status: string | null;
@@ -23,12 +25,18 @@ export interface DashboardResponse {
   };
 }
 
-
+// ✅ Fetch dashboard data with Bearer token
 export const getDashboardData = async (page = 1, per_page = 10): Promise<DashboardResponse> => {
+  const token = localStorage.getItem('token'); // get stored JWT
+  if (!token) {
+    throw new Error('Authentication token missing. Please login again.');
+  }
+
   const response = await fetch(`${API_BASE_URL}/api/analyzer/dashboard?page=${page}&per_page=${per_page}`, {
     method: "GET",
     headers: {
       Accept: "application/json",
+      Authorization: `Bearer ${token}`, // ✅ send token
     },
   });
 

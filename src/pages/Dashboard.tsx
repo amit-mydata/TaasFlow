@@ -9,6 +9,8 @@ interface Candidate {
   name: string;
   email: string;
   phone: string;
+  hrName: string;          // ✅ new
+  jobPosition: string;
   date: string;
   finalScore: number;
   resumeScore: number;
@@ -56,6 +58,8 @@ const Dashboard: React.FC = () => {
             name: item.candidate_name,
             email: item.email,
             phone: item.phone,
+            hrName: item.hr_name,              // ✅ new
+            jobPosition: item.job_position,
             date: item.date,
             finalScore: item.overall_score ?? 0,
             status: item.status ?? "Incomplete",
@@ -186,6 +190,8 @@ const Dashboard: React.FC = () => {
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Candidate</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone No.</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">HR Name</th> {/* ✅ new */}
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Job Position</th>
                 <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Overall Score</th>
                 <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Resume</th>
                 <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Communication</th>
@@ -206,6 +212,14 @@ const Dashboard: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">{candidate.phone}</div>
                   </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {candidate.hrName}
+                  </td>
+
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {candidate.jobPosition}
+                  </td>
+
                   <td className="px-6 py-4 whitespace-nowrap text-center">
                     <div
                       className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${candidate.finalScore >= 80

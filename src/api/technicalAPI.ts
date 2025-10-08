@@ -16,17 +16,21 @@ export interface SubmitAnswerResponse {
   data?: any;
 }
 
-// ✅ Submit a single technical answer
+// ✅ Submit a single technical answer with Bearer token
 export const submitSingleAnswerAPI = async ({
   type,
   quiz_id,
   candidate_uid,
   user_answer,
-}: SubmitAnswerPayload): Promise<SubmitAnswerResponse> => {
+  token, // <-- add token
+}: SubmitAnswerPayload & { token: string }): Promise<SubmitAnswerResponse> => {
   try {
     const res = await fetch(`${API_BASE_URL}/api/analyzer/submit-single-answer`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify({ type, quiz_id, candidate_uid, user_answer }),
     });
 
@@ -38,23 +42,32 @@ export const submitSingleAnswerAPI = async ({
   }
 };
 
-// ✅ Fetch technical questions (optional, if needed)
-export const fetchTechnicalQuestionsAPI = async (candidateId: string) => {
+// ✅ Fetch technical questions with Bearer token
+export const fetchTechnicalQuestionsAPI = async (candidateId: string, token: string) => {
   const res = await fetch(
     `${API_BASE_URL}/api/analyzer/get-quiz-questions?candidate_uid=${candidateId}`,
-    { headers: { accept: 'application/json' } }
+    { 
+      headers: { 
+        accept: 'application/json',
+        'Authorization': `Bearer ${token}`
+      } 
+    }
   );
 
   if (!res.ok) throw new Error('Failed to fetch technical questions');
   return res.json();
 };
 
-
-// ✅ Fetch technical analysis result
-export const fetchTechnicalResultsAPI = async (candidateId: string) => {
+// ✅ Fetch technical analysis result with Bearer token
+export const fetchTechnicalResultsAPI = async (candidateId: string, token: string) => {
   const res = await fetch(
     `${API_BASE_URL}/api/analyzer/get-technical-data?candidate_uid=${candidateId}`,
-    { headers: { accept: 'application/json' } }
+    { 
+      headers: { 
+        accept: 'application/json',
+        'Authorization': `Bearer ${token}`
+      } 
+    }
   );
 
   if (!res.ok) throw new Error('Failed to fetch technical results');

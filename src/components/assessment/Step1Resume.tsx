@@ -6,56 +6,57 @@ interface Step1ResumeData {
   resume: File | null;
   jobDescription: string;
   candidateInfo: CandidateInfo;
+  hrName: string;
+  jobPosition: string;
 }
 
 interface Step1ResumeProps {
   data: Step1ResumeData;
-  onComplete: (result: {
+  onComplete: (
+    result: {
       resume: File | null;
       jobDescription: string;
       candidateInfo: CandidateInfo;
+      hrName: string;
+      jobPosition: string;
       resumeScore: number;
       resumeAnalysis: AnalysisResult;
       candidateId?: string;
       questions?: string[];
     },
-    nextStep?: number) => void;
+    nextStep?: number
+  ) => void;
 }
 
-// -----------------------------
-// COMPONENT
-// -----------------------------
 const Step1Resume: React.FC<Step1ResumeProps> = ({ data, onComplete }) => {
   const [resumeFile, setResumeFile] = useState<File | null>(
-    data.resume instanceof File ? data.resume : null
-  );
-  const [jobDescription, setJobDescription] = useState<string>(
-    data.jobDescription || ""
-  );
-  const [candidateInfo, setCandidateInfo] = useState<CandidateInfo>(
-    data.candidateInfo || { name: "", email: "", phone: "" }
-  );
-  const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
-  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(
-    null
-  );
-  const [candidateId, setCandidateId] = useState<string | null>(null);
+  data.resume instanceof File ? data.resume : null
+);
+const [jobDescription, setJobDescription] = useState<string>(
+  data.jobDescription || ""
+);
+const [candidateInfo, setCandidateInfo] = useState<CandidateInfo>(
+  data.candidateInfo || { name: "", email: "", phone: "" }
+);
+const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
+const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(
+  null
+);
+const [candidateId, setCandidateId] = useState<string | null>(null);
+const [hrName, setHrName] = useState<string>("");
+const [jobPosition, setJobPosition] = useState<string>("");
+const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+// -----------------------------
+// Load candidateId from localStorage on mount
+// -----------------------------
+useEffect(() => {
+  const storedId = localStorage.getItem("candidateId");
+  if (storedId) {
+    setCandidateId(storedId);
+  }
+}, []);
 
-  // -----------------------------
-  // Load candidateId from localStorage on mount
-  // -----------------------------
-  useEffect(() => {
-    const storedId = localStorage.getItem("candidateId");
-    if (storedId) {
-      setCandidateId(storedId);
-    }
-  }, []);
-
-  // -----------------------------
-  // HANDLERS
-  // -----------------------------
   const handleFileUpload = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && file.type === "application/pdf") {
@@ -70,34 +71,47 @@ const Step1Resume: React.FC<Step1ResumeProps> = ({ data, onComplete }) => {
   };
 
   const handleAnalysis = async () => {
-    if (!resumeFile) return;
-    setIsAnalyzing(true);
+  if (!resumeFile) return;
+  setIsAnalyzing(true);
 
-    try {
-      const { analysis, candidateId } = await analyzeResume(
-        candidateInfo,
-        jobDescription,
-        resumeFile
-      );
+  const token = localStorage.getItem("token");
+  if (!token) {
+    alert("Please log in to analyze resumes");
+    setIsAnalyzing(false);
+    return;
+  }
 
-      setAnalysisResult(analysis);
-      setCandidateId(candidateId);
-      localStorage.setItem("candidateId", candidateId);
-    } catch (err: any) {
-      console.error(err);
-      alert(err.message || "Error analyzing resume");
-    } finally {
-      setIsAnalyzing(false);
-    }
-  };
+  try {
+    const { analysis, candidateId } = await analyzeResume(
+      candidateInfo,
+      jobDescription,
+      resumeFile,
+      hrName,
+      jobPosition,
+      token
+    );
+
+    setAnalysisResult(analysis);
+    setCandidateId(candidateId);
+    localStorage.setItem("candidateId", candidateId);
+  } catch (err: any) {
+    console.error(err);
+    alert(err.message || "Error analyzing resume");
+  } finally {
+    setIsAnalyzing(false);
+  }
+};
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+
     if (
       resumeFile &&
       jobDescription.trim() &&
       candidateInfo.name &&
-      candidateInfo.email
+      candidateInfo.email &&
+      hrName.trim() &&
+      jobPosition.trim()
     ) {
       if (!analysisResult) {
         await handleAnalysis();
@@ -108,6 +122,8 @@ const Step1Resume: React.FC<Step1ResumeProps> = ({ data, onComplete }) => {
             resume: resumeFile,
             jobDescription,
             candidateInfo,
+            hrName,
+            jobPosition,
             resumeScore: analysisResult.score,
             resumeAnalysis: analysisResult,
             candidateId: candidateId || undefined,
@@ -116,87 +132,87 @@ const Step1Resume: React.FC<Step1ResumeProps> = ({ data, onComplete }) => {
           2
         );
       }
+    } else {
+      alert("Please fill all required fields.");
     }
   };
 
-  // -----------------------------
-  // RENDER
-  // -----------------------------
   return (
     <div className="p-8">
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          Resume & Job Description Matching
-        </h2>
-        <p className="text-gray-600">
-          Upload candidate resume and provide job description for AI-powered
-          matching analysis
-        </p>
-      </div>
+      <h2 className="text-2xl font-bold text-gray-900 mb-2">Resume & Job Description Matching</h2>
+      <p className="text-gray-600 mb-8">
+        Upload candidate resume and provide job description for AI-powered matching analysis
+      </p>
 
       <form onSubmit={handleSubmit} className="space-y-8">
-        {/* Candidate Information */}
+
+        {/* Candidate Info */}
         <div className="grid md:grid-cols-3 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Candidate Name *
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Candidate Name *</label>
             <input
               type="text"
               value={candidateInfo.name}
-              onChange={(e) =>
-                setCandidateInfo((prev) => ({ ...prev, name: e.target.value }))
-              }
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="John Doe"
+              onChange={(e) => setCandidateInfo((prev) => ({ ...prev, name: e.target.value }))}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               required
             />
           </div>
-
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email Address *
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
             <input
               type="email"
               value={candidateInfo.email}
-              onChange={(e) =>
-                setCandidateInfo((prev) => ({ ...prev, email: e.target.value }))
-              }
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="john@example.com"
+              onChange={(e) => setCandidateInfo((prev) => ({ ...prev, email: e.target.value }))}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Phone Number
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
             <input
               type="text"
               value={candidateInfo.phone}
               onChange={(e) => {
-                // Remove non-numeric characters
-                let val = e.target.value.replace(/\D/g, '');
-                // Limit to 10 digits
+                let val = e.target.value.replace(/\D/g, "");
                 if (val.length > 10) val = val.slice(0, 10);
                 setCandidateInfo((prev) => ({ ...prev, phone: val }));
               }}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Enter 10-digit number"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
             />
           </div>
+        </div>
 
+        {/* HR Name & Job Position */}
+        <div className="grid md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">HR Name *</label>
+            <input
+              type="text"
+              value={hrName}
+              onChange={(e) => setHrName(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Job Position *</label>
+            <input
+              type="text"
+              value={jobPosition}
+              onChange={(e) => setJobPosition(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
         </div>
 
         {/* Resume Upload */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Resume Upload *
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Resume Upload *</label>
           <div
             onClick={() => fileInputRef.current?.click()}
-            className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 hover:bg-blue-50 transition-colors cursor-pointer"
+            className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 hover:bg-blue-50 cursor-pointer"
           >
             <input
               ref={fileInputRef}
@@ -205,13 +221,10 @@ const Step1Resume: React.FC<Step1ResumeProps> = ({ data, onComplete }) => {
               onChange={handleFileUpload}
               className="hidden"
             />
-
             {resumeFile ? (
               <div className="flex items-center justify-center space-x-2 text-green-600">
                 <CheckCircle className="w-6 h-6" />
-                <span className="font-medium">
-                  {resumeFile.name || "Uploaded Resume"}
-                </span>
+                <span>{resumeFile.name}</span>
               </div>
             ) : (
               <div className="text-gray-500">
@@ -225,15 +238,13 @@ const Step1Resume: React.FC<Step1ResumeProps> = ({ data, onComplete }) => {
 
         {/* Job Description */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Job Description *
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Job Description *</label>
           <textarea
             value={jobDescription}
             onChange={(e) => setJobDescription(e.target.value)}
             rows={8}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Paste the complete job description including requirements, responsibilities, and qualifications..."
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            placeholder="Paste the complete job description..."
             required
           />
         </div>
@@ -247,11 +258,11 @@ const Step1Resume: React.FC<Step1ResumeProps> = ({ data, onComplete }) => {
               <div className="flex items-center space-x-2">
                 <div
                   className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg ${analysisResult.score >= 80
-                      ? "bg-green-500"
-                      : analysisResult.score >= 60
+                    ? "bg-green-500"
+                    : analysisResult.score >= 60
                       ? "bg-yellow-500"
                       : "bg-red-500"
-                  }`}
+                    }`}
                 >
                   {analysisResult.score}
                 </div>
@@ -349,8 +360,8 @@ const Step1Resume: React.FC<Step1ResumeProps> = ({ data, onComplete }) => {
                 ? "Waiting For Questions"
                 : "Analyzing..."
               : analysisResult
-              ? "Continue to Technical Screening"
-              : "Analyze Resume"}
+                ? "Continue to Technical Screening"
+                : "Analyze Resume"}
           </button>
         </div>
       </form>

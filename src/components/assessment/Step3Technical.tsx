@@ -99,8 +99,16 @@ const Step3Technical: React.FC<Step3TechnicalProps> = ({ candidateId, technicalQ
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
+
 const submitSingleAnswer = async (question: Question, answer: string | number) => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    alert('Authentication token missing. Please login again.');
+    return;
+  }
+
   setIsAPICalling(true);
+
   const questionIndex =
     sections.slice(0, currentSection).reduce((sum, section) => sum + section.questions.length, 0) +
     currentQuestion;
@@ -118,6 +126,7 @@ const submitSingleAnswer = async (question: Question, answer: string | number) =
       quiz_id: question.id || '',
       candidate_uid: candidateId || '',
       user_answer: answer.toString(),
+      token, // <-- pass token
     });
     return res;
   } catch (err) {

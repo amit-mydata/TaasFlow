@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Header from './components/Header';
 import Landing from './pages/Landing';
 import Assessment, { AssessmentData } from './pages/Assessment';
 import Dashboard from './pages/Dashboard';
 import Results from './pages/Results';
+import Signup from './Auth/Signup';
+import Signin from './Auth/Signin';
 
 function App() {
   const [currentCandidate, setCurrentCandidate] = useState<AssessmentData | null>(null);
@@ -15,6 +17,8 @@ function App() {
         <Header />
         <Routes>
           <Route path="/" element={<Landing />} />
+          <Route path="/signup" element={<Signup/>} />
+        <Route path="/signin" element={<Signin />} />
           {/* Main Assessment Route */}
           <Route
             path="/assessment/*"
