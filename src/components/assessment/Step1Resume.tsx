@@ -58,17 +58,28 @@ useEffect(() => {
 }, []);
 
   const handleFileUpload = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file && file.type === "application/pdf") {
-      if (file.size > 10 * 1024 * 1024) {
-        alert("File size must be under 10MB");
-        return;
-      }
-      setResumeFile(file);
-    } else {
-      alert("Please upload a PDF file");
-    }
-  };
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  const allowedTypes = [
+    "application/pdf",
+    "application/msword", // .doc
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document" // .docx
+  ];
+
+  if (!allowedTypes.includes(file.type)) {
+    alert("Please upload a PDF or Word document (.doc/.docx)");
+    return;
+  }
+
+  if (file.size > 10 * 1024 * 1024) {
+    alert("File size must be under 10MB");
+    return;
+  }
+
+  setResumeFile(file);
+};
+
 
   const handleAnalysis = async () => {
   if (!resumeFile) return;
@@ -217,7 +228,7 @@ useEffect(() => {
             <input
               ref={fileInputRef}
               type="file"
-              accept=".pdf"
+               accept=".pdf,.doc,.docx"
               onChange={handleFileUpload}
               className="hidden"
             />
