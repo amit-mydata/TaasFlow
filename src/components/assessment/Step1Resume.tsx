@@ -1,7 +1,7 @@
 import React, { useState, useRef, ChangeEvent, FormEvent, useEffect } from "react";
 import { Upload, CheckCircle, Loader } from "lucide-react";
 import { analyzeResume, AnalysisResult, CandidateInfo } from "../../api/resume";
-
+import toast from 'react-hot-toast';
 interface Step1ResumeData {
   resume: File | null;
   jobDescription: string;
@@ -107,7 +107,7 @@ useEffect(() => {
     localStorage.setItem("candidateId", candidateId);
   } catch (err: any) {
     console.error(err);
-    alert(err.message || "Error analyzing resume");
+    toast.error(err?.message || "Error analyzing resume");
   } finally {
     setIsAnalyzing(false);
   }
