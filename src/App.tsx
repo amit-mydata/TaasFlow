@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard';
 import Results from './pages/Results';
 import Signup from './Auth/Signup';
 import Signin from './Auth/Signin';
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   const [currentCandidate, setCurrentCandidate] = useState<AssessmentData | null>(null);
@@ -20,6 +21,7 @@ function App() {
           <Route path="/signup" element={<Signup/>} />
         <Route path="/signin" element={<Signin />} />
           {/* Main Assessment Route */}
+           <Route element={<ProtectedRoute />}>
           <Route
             path="/assessment/*"
             element={<Assessment onComplete={setCurrentCandidate} />}
@@ -35,6 +37,7 @@ function App() {
               )
             }
           />
+          </Route>
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </div>

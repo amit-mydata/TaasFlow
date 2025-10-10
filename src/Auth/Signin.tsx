@@ -1,35 +1,42 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { loginUser } from "../api/authAPI";
+
 interface LoginResponse {
   status: boolean;
   data: string; // token
   message: string;
 }
+
 const Signin = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-const handleSignin = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setLoading(true);
-  setError("");
 
-  try {
-    // Add this after successful login
-const data: LoginResponse = await loginUser(email, password);
-localStorage.setItem("token", data.data); // ✅ store the actual token returned by backend
+  // ✅ Redirect to /assessment if already logged in
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) navigate("/assessment");
+  }, [navigate]);
 
-    window.dispatchEvent(new Event("storage")); // trigger header update
-    navigate("/assessment");
-  } catch (err: any) {
-    setError(err?.message || "Something went wrong");
-  } finally {
-    setLoading(false);
-  }
-};
+  const handleSignin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      const data: LoginResponse = await loginUser(email, password);
+      localStorage.setItem("token", data.data);
+      window.dispatchEvent(new Event("storage"));
+      navigate("/assessment");
+    } catch (err: any) {
+      setError(err?.message || "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">

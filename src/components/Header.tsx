@@ -6,25 +6,26 @@ const Header = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Initialize directly from localStorage
   const [isAuthenticated, setIsAuthenticated] = useState(() => !!localStorage.getItem("token"));
 
-useEffect(() => {
-  const handleStorageChange = () => {
-    setIsAuthenticated(!!localStorage.getItem("token"));
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setIsAuthenticated(!!localStorage.getItem("token"));
+    };
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    setIsAuthenticated(false);
+    navigate("/signin");
   };
-  window.addEventListener("storage", handleStorageChange);
-  return () => window.removeEventListener("storage", handleStorageChange);
-}, []);
-
-const handleLogout = () => {
-  localStorage.removeItem("token");
-  setIsAuthenticated(false);
-  navigate("/signin");
-};
-
 
   const isActive = (path: string) => location.pathname === path;
+
+  // ✅ Detect auth pages
+  const isAuthPage = ["/signin", "/signup"].includes(location.pathname);
 
   return (
     <header className="bg-white/80 backdrop-blur-lg border-b border-gray-200/50 sticky top-0 z-50">
@@ -44,9 +45,32 @@ const handleLogout = () => {
             </div>
           </Link>
 
-          {/* Navigation / Buttons */}
           <nav className="flex items-center space-x-2">
-            {!isAuthenticated ? (
+            {/* ✅ If on signin/signup page — always show auth buttons */}
+            {isAuthPage ? (
+              <>
+                <Link
+                  to="/signup"
+                  className={`inline-flex px-6 py-2 font-semibold rounded-xl transition-all duration-200 ${
+                    location.pathname === "/signup"
+                      ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white"
+                      : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+                  }`}
+                >
+                  Sign Up
+                </Link>
+                <Link
+                  to="/signin"
+                  className={`inline-flex px-6 py-2 font-semibold rounded-xl transition-all duration-200 ${
+                    location.pathname === "/signin"
+                      ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white"
+                      : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+                  }`}
+                >
+                  Sign In
+                </Link>
+              </>
+            ) : !isAuthenticated ? (
               <>
                 <Link
                   to="/signup"
