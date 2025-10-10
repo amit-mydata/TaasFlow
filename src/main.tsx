@@ -9,17 +9,32 @@ createRoot(document.getElementById('root')!).render(
     <App />
     {/* Toast notifications container */}
     <Toaster
-      position="top-center"
-      reverseOrder={false}
-      toastOptions={{
-        duration: 4000, // auto dismiss after 4s
-        style: {
-          background: '#333',
-          color: '#fff',
-          fontWeight: '500',
-        },
-      }}
-    />
+  position="top-center"
+  reverseOrder={false}
+  toastOptions={{
+    // Default options for all toasts
+    duration: 4000,
+    style: {
+      background: 'red', // red background
+      color: 'white',    // white text
+      fontWeight: '500',
+    },
+    // You can also specify different options for different types
+    error: {
+      style: {
+        background: 'red',
+        color: 'white',
+      },
+    },
+    success: {
+      style: {
+        background: 'green',
+        color: 'white',
+      },
+    },
+  }}
+/>
+
 
   </StrictMode>
 );
